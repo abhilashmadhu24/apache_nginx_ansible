@@ -1,8 +1,9 @@
 ---
-- hosts: local
+- hosts: remote
   become: true
   vars_files:
     - vars/default.yml
+    - vars/proxy.yml
 
   tasks:
     - name: Install prerequisites
@@ -12,17 +13,42 @@
     - name: Install Apache
       apt: name=apache2 update_cache=yes state=latest
 
+    - name: Change Apache default port
+      lineinfile:
+          path: /etc/apache2/ports.conf
+          regexp: "Listen 80" 
+          line: "Listen 8080"
+          state: present
+          backup: yes
+
+    - name: Install Nginx
+      apt: name=nginx update_cache=yes state=latest
+
+    - name: Configure nginx proxy
+      template:
+        src: "files/nginx.conf.j2"
+        dest: "/etc/nginx/sites-enabled/reverse-proxy.conf"
+   
+    - name: Removing default Nginx page
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+
+    - name: Starting new nginx reverse-conf
+      command: echo "this task will restart the nginx"
+      notify: Restart Nginx
+
     - name: Create document root
       file:
         path: "/var/www/{{ http_host }}"
         state: directory
-        owner: "{{ app_user }}"
         mode: '0755'
 
     - name: Copy index test page
       template:
         src: "files/index.html.j2"
         dest: "/var/www/{{ http_host }}/index.html"
+        mode: '0644'
 
     - name: Set up Apache virtuahHost
       template:
@@ -48,3 +74,12 @@
       service:
         name: apache2
         state: restarted
+
+    - name: Reload Nginx
+      service:
+        name: nginx
+        state: reloaded
+
+    - name: restart apache
+      service: name=nginx state=restarted
+      listen: "Restart Nginx"
