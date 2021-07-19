@@ -1,0 +1,7 @@
+[local]
+172.16.1.243
+[all:vars]
+ansible_connection='ssh'
+ansible_port='6283'
+ansible_user='ubuntu'
+ansible_ssh_private_key_file='/home/ubuntu/key.pem'

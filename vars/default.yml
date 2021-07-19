@@ -1,0 +1,6 @@
+---
+app_user: "ivan"
+http_host: "ivan.com"
+http_conf: "ivan_com.conf"
+http_port: "80"
+disable_default: true
